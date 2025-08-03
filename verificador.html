@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verificador de Identidad - Colegio</title>
+  <link rel="icon" type="image/png" href="https://via.placeholder.com/100x100.png?text=Logo" />
+  <style>
+    :root {
+      --bg-color: #ffffff;
+      --text-color: #333333;
+      --input-bg: #f9f9f9;
+      --table-bg: #ffffff;
+      --table-header: #f0f0f0;
+      --btn-bg: #007BFF;
+      --btn-color: #ffffff;
+    }
+    [data-theme="dark"] {
+      --bg-color: #1f1f1f;
+      --text-color: #f0f0f0;
+      --input-bg: #2e2e2e;
+      --table-bg: #2a2a2a;
+      --table-header: #444;
+      --btn-bg: #0d6efd;
+      --btn-color: #ffffff;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 0;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .container {
+      max-width: 900px;
+      width: 95%;
+      margin: 40px auto;
+      background-color: var(--table-bg);
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      box-sizing: border-box;
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .logo img {
+      max-height: 80px;
+      max-width: 100%;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    input[type="text"] {
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background-color: var(--input-bg);
+      color: var(--text-color);
+      font-size: 16px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: var(--btn-bg);
+      color: var(--btn-color);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      width: fit-content;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    .theme-toggle {
+      text-align: right;
+      margin-bottom: 10px;
+    }
+    .theme-toggle label {
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .table-wrapper {
+      overflow-x: auto;
+      margin-top: 25px;
+    }
+    table {
+      width: 100%;
+      min-width: 600px;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background-color: var(--table-header);
+    }
+    .nowrap {
+      white-space: nowrap;
+    }
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 0.85em;
+      color: #777;
+    }
+    @media (max-width: 600px) {
+      button {
+        width: 100%;
+      }
+      .theme-toggle {
+        text-align: center;
+      }
+    }
+  </style>
+  <script>
+    let datos = [];
+
+    function validarFormulario(event) {
+      const campo = document.querySelector('input[name="busqueda"]').value.trim();
+      if (campo === "") {
+        alert("Por favor, ingresa un RUT o nombre para buscar.");
+        event.preventDefault();
+        return;
+      }
+      buscar(campo);
+      event.preventDefault();
+    }
+
+    function toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    }
+
+    function buscar(valor) {
+      const resultados = datos.filter(fila =>
+        Object.values(fila).some(cell =>
+          String(cell).toLowerCase().includes(valor.toLowerCase())
+        )
+      );
+
+      mostrarResultados(resultados, valor);
+    }
+
+    function mostrarResultados(resultados, query) {
+      const container = document.getElementById("resultados");
+      if (resultados.length === 0) {
+        container.innerHTML = `<p>No se encontraron resultados para <strong>${query}</strong>.</p>`;
+        return;
+      }
+
+      const encabezados = Object.keys(resultados[0]);
+      let html = `<h2>Resultados:</h2><div class="table-wrapper"><table><thead><tr>`;
+      encabezados.forEach(e => html += `<th>${e}</th>`);
+      html += `</tr></thead><tbody>`;
+
+      resultados.forEach(fila => {
+        html += `<tr>`;
+        encabezados.forEach(e => {
+          const val = fila[e];
+          const nowrap = typeof val === "string" && val.includes("-") ? "nowrap" : "";
+          html += `<td class="${nowrap}">${val}</td>`;
+        });
+        html += `</tr>`;
+      });
+
+      html += `</tbody></table></div>`;
+      container.innerHTML = html;
+    }
+
+    async function cargarDatos() {
+      try {
+        const response = await fetch("https://script.google.com/macros/s/AKfycbwxZzLsCHUN6qCtIMnWVmLVtxGhFMylTdd5gnwFRhtC2NnPvE5Oq84ZLiFuLLGoBJ9h/exec");
+        datos = await response.json();
+      } catch (error) {
+        console.error("Error cargando datos:", error);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      cargarDatos();
+    });
+  </script>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <img src="https://via.placeholder.com/200x80.png?text=Logo+Colegio" alt="Logo del Colegio">
+    </div>
+
+    <div class="theme-toggle">
+      <label>
+        <input type="checkbox" onchange="toggleTheme()" />
+        Modo Noche/Día
+      </label>
+    </div>
+
+    <h1>Verificador de Identidad</h1>
+
+    <form onsubmit="validarFormulario(event)">
+      <label for="busqueda">Buscar por RUT o nombre:</label>
+      <input type="text" name="busqueda" id="busqueda" placeholder="Ej: 12.345.678-9 o Juan Pérez">
+      <button type="submit">Buscar</button>
+    </form>
+
+    <div id="resultados"></div>
+  </div>
+
+  <footer>
+    &copy; 2025 Sebastián Leiva V. Todos los derechos reservados.
+  </footer>
+</body>
+</html>
